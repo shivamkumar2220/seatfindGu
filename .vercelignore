@@ -1,0 +1,22 @@
+# Files Vercel must never upload, even if they sit in this folder.
+# (Matters when deploying with the Vercel CLI from your computer.)
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.csv
+*.ods
+*.numbers
+seating*
+Seating*
+student-data/
+data/
+private/
+~$*
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
+README.md

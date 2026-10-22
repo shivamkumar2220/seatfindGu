@@ -1,0 +1,35 @@
+# ------------------------------------------------------------
+# NEVER commit student data. Seating plans contain personal
+# information (names, admission numbers) of thousands of students.
+# ------------------------------------------------------------
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.csv
+*.ods
+*.numbers
+seating*
+Seating*
+student-data/
+data/
+private/
+
+# Excel temporary lock files
+~$*
+
+# Vercel CLI project link folder
+.vercel
+
+# Local environment files
+.env
+.env.*
+
+# Editor and OS clutter
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+node_modules/
+*.log

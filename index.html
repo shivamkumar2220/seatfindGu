@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Independent student-developed tool to find your exam seat from the Galgotias University seating plan spreadsheet. The file is read only inside your browser.">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#16336E">
+  <title>Galgotias University Exam Seat Finder</title>
+
+  <!-- Fonts: only font files are downloaded from Google; no student data is ever sent. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600;700&display=swap">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- SheetJS pinned to 0.20.3 from the official SheetJS CDN.
+       (The "xlsx" package on npm/jsDelivr is stuck at 0.18.5, which has known security issues.) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#searchSection">Skip to search</a>
+
+  <div class="notice-bar" role="note">
+    Independent student-developed utility. Not an official university website.
+  </div>
+
+  <header class="site-header">
+    <div class="container">
+      <p class="wordmark">
+        <span class="wordmark-name">Galgotias University</span>
+        <span class="wordmark-place">Greater Noida, Uttar Pradesh</span>
+      </p>
+      <h1 class="hero-title">Exam Seat Finder</h1>
+      <p class="hero-lead">
+        Open the seating plan spreadsheet shared for your exam, then search with your
+        admission number or full name to see your room and seat.
+      </p>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+
+    <!-- First-time instructions: a real sequence, so it is numbered. -->
+    <section class="intro-steps" aria-labelledby="introHeading" id="introSection">
+      <h2 id="introHeading" class="section-title">First time here?</h2>
+      <ol class="intro-list">
+        <li><strong>Get the seating plan file</strong> (.xls or .xlsx) shared by your department or exam cell.</li>
+        <li><strong>Open it below.</strong> The file is read on your own device and is never uploaded.</li>
+        <li><strong>Search</strong> with your admission number (most reliable) or your full name.</li>
+      </ol>
+    </section>
+
+    <!-- Step 1: load spreadsheet -->
+    <section class="panel" aria-labelledby="loadHeading" id="loadSection">
+      <div class="panel-head">
+        <span class="step-number" aria-hidden="true">1</span>
+        <h2 id="loadHeading" class="section-title">Open the seating plan</h2>
+      </div>
+
+      <div class="upload-area" id="uploadArea">
+        <input type="file" id="fileInput" class="file-input"
+               accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+               aria-describedby="privacyNote">
+        <label for="fileInput" class="dropzone" id="dropzone">
+          <svg class="dropzone-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5zM8 13h8v1.6H8V13zm0 3.4h8V18H8v-1.6z"/>
+          </svg>
+          <span class="dropzone-title">Choose an Excel file</span>
+          <span class="dropzone-hint">or drag it here. Accepts .xls and .xlsx</span>
+        </label>
+
+        <div class="loader" id="loader" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="loaderText">Reading spreadsheet…</span>
+        </div>
+      </div>
+
+      <p class="privacy-note" id="privacyNote">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2 4 5v6c0 5 3.4 9.6 8 11 4.6-1.4 8-6 8-11V5l-8-3zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/></svg>
+        <span>Your spreadsheet is processed entirely in this browser tab. It is not uploaded to any server,
+        not saved on this device, and is cleared when you close or reload the page.</span>
+      </p>
+
+      <!-- Shown after a file is loaded -->
+      <div class="data-summary" id="dataSummary" hidden>
+        <div class="summary-row">
+          <div>
+            <p class="summary-file" id="summaryFile"></p>
+            <p class="summary-counts" id="summaryCounts"></p>
+          </div>
+          <button type="button" class="button button-ghost" id="removeFileButton">Remove file</button>
+        </div>
+
+        <ul class="summary-warnings" id="summaryWarnings"></ul>
+
+        <div class="field">
+          <label for="sheetSelect" class="field-label">Worksheet to search</label>
+          <select id="sheetSelect" class="select"></select>
+        </div>
+
+        <details class="mapping-panel" id="mappingPanel">
+          <summary>Adjust columns</summary>
+          <div class="mapping-body">
+            <p class="mapping-help">
+              Columns are detected automatically. If a result looks wrong, choose the correct
+              column for each field below and apply.
+            </p>
+
+            <div class="mapping-top">
+              <div class="field" id="mappingSheetField">
+                <label for="mappingSheetSelect" class="field-label">Worksheet</label>
+                <select id="mappingSheetSelect" class="select"></select>
+              </div>
+              <div class="field field-narrow">
+                <label for="headerRowInput" class="field-label">Header row (Excel row number)</label>
+                <input type="number" id="headerRowInput" class="text-input" min="1" step="1" inputmode="numeric">
+              </div>
+            </div>
+
+            <div class="mapping-grid" id="mappingGrid"></div>
+
+            <p class="field-error" id="mappingError" role="alert" hidden></p>
+
+            <div class="button-row">
+              <button type="button" class="button button-primary" id="applyMappingButton">Apply columns</button>
+              <button type="button" class="button button-ghost" id="resetMappingButton">Use automatic detection</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Global status messages (success / warning / error) -->
+    <div class="status" id="statusMessage" role="status" aria-live="polite" hidden></div>
+
+    <!-- Step 2: search -->
+    <section class="panel" aria-labelledby="searchHeading" id="searchSection">
+      <div class="panel-head">
+        <span class="step-number" aria-hidden="true">2</span>
+        <h2 id="searchHeading" class="section-title">Find your seat</h2>
+      </div>
+
+      <form id="searchForm" class="search-form" novalidate>
+        <fieldset class="mode-switch">
+          <legend class="visually-hidden">Search by</legend>
+          <input type="radio" name="searchMode" id="modeAdmission" value="admission" checked>
+          <label for="modeAdmission">Admission number</label>
+          <input type="radio" name="searchMode" id="modeName" value="name">
+          <label for="modeName">Full name</label>
+        </fieldset>
+
+        <div class="search-row">
+          <label for="searchInput" class="visually-hidden" id="searchLabel">Admission number</label>
+          <input type="search" id="searchInput" class="search-input"
+                 placeholder="e.g. 24SCSE1010001" autocomplete="off" spellcheck="false"
+                 autocapitalize="characters" aria-describedby="searchHint searchError" disabled>
+          <button type="submit" class="button button-primary" id="searchButton" disabled>Search</button>
+          <button type="button" class="button button-ghost" id="clearButton" disabled>Clear</button>
+        </div>
+        <p class="field-hint" id="searchHint">Open the seating plan above to enable search.</p>
+        <p class="field-error" id="searchError" hidden></p>
+      </form>
+
+      <div class="results" id="results" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>
+        <strong>Privacy.</strong> Seating plan files are read only inside your browser using JavaScript.
+        Student records are never sent to a server, written to browser storage, or logged.
+      </p>
+      <p>
+        <strong>Disclaimer.</strong> Independent student-developed utility. Not an official university website.
+        Always confirm your seat with the official notice or the exam cell.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
